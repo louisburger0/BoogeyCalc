@@ -1,87 +1,29 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>Voice Calculator</title>
-</head>
+function startListening() {
 
-<body style="font-family: Arial; text-align:center; margin-top:50px;">
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
-<h2>🎤 Voice Calculator</h2>
-
-<button onclick="startListening()">Speak</button>
-
-<p id="spoken">Say something like: “what is 10 plus 5”</p>
-<h1 id="result"></h1>
-
-<script>
-
-function speak(text) {
-  const msg = new SpeechSynthesisUtterance(text);
-  msg.lang = "en-US";
-  window.speechSynthesis.speak(msg);
-}
-
-/* Convert voice to math */
-function convert(text) {
-  return text
-    .toLowerCase()
-    .replace(/what is|calculate|equals|please/gi, "")
-    .replace(/plus/gi, "+")
-    .replace(/minus/gi, "-")
-    .replace(/times|multiplied by|x/gi, "*")
-    .replace(/divided by/gi, "/")
-    .replace(/percent of/gi, "* 0.01 *")
-    .replace(/percent/gi, "* 0.01");
-}
-
-/* ✅ CAPACITOR VOICE FUNCTION */
-async function startListening() {
-
-  try {
-
-    const permission = await Capacitor.Plugins.SpeechRecognition.requestPermissions();
-
-    if (permission.speechRecognition !== 'granted') {
-      alert("Microphone permission denied");
-      return;
-    }
-
-    Capacitor.Plugins.SpeechRecognition.start({
-      language: "en-US",
-      partialResults: false,
-      popup: true
-    });
-
-    Capacitor.Plugins.SpeechRecognition.addListener('result', (data) => {
-
-      let text = data.matches[0];
-
-      document.getElementById("spoken").innerText = text;
-
-      let math = convert(text);
-
-      try {
-        let answer = eval(math);
-
-        document.getElementById("result").innerText = "= " + answer;
-
-        speak("The answer is " + answer);
-
-      } catch (e) {
-        document.getElementById("result").innerText = "Error";
-        speak("Error calculating");
-      }
-
-      Capacitor.Plugins.SpeechRecognition.stop();
-    });
-
-  } catch (err) {
-    alert("Voice error: " + err);
+  if (!SpeechRecognition) {
+    alert("Speech recognition not supported in this browser");
+    return;
   }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.start();
+
+  recognition.onresult = function(event) {
+
+    let text = event.results[0][0].transcript;
+    document.getElementById("spoken").innerText = text;
+
+    let math = convert(text);
+
+    try {
+      let answer = eval(math);
+      document.getElementById("result").innerText = "= " + answer;
+      speak("The answer is " + answer);
+    } catch {
+      document.getElementById("result").innerText = "Error";
+    }
+  };
 }
-
-</script>
-
-</body>
-</html>
